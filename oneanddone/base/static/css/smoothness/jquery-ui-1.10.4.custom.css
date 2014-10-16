@@ -880,3 +880,6 @@ button.ui-button::-moz-focus-inner {
 	filter: Alpha(Opacity=30);
 	border-radius: 8px;
 }
+h2.ex {
+    margin-top: 10px;
+   
