@@ -85,12 +85,13 @@ class TaskForm(forms.ModelForm):
 
     class Meta:
         model = Task
-        fields = ('name', 'short_description', 'execution_time', 'difficulty',
+        fields = ('name', 'short_description', 'execution_time', 'difficulty', 'admin_time',
                   'priority', 'repeatable', 'team', 'project', 'type', 'start_date',
                   'end_date', 'why_this_matters', 'prerequisites', 'instructions',
                   'is_draft', 'is_invalid')
         widgets = {
             'name': forms.TextInput(attrs={'size': 100, 'class': 'fill-width'}),
+            'admin_time': forms.TextInput(attrs={'size': 100, 'class': 'fill-width'}),
             'short_description': forms.TextInput(attrs={'size': 100, 'class': 'fill-width'}),
             'instructions': AceWidget(mode='markdown', theme='textmate', width='800px',
                                       height='300px', wordwrap=True,
