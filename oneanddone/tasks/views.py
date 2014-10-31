@@ -340,7 +340,7 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
     def form_valid(self, form):
         admin_time = form.cleaned_data['admin_time']
         if admin_time:
-            self.execution_time=admin_time
+            task.self.execution_time=admin_time
         form.save(self.request.user)
 
         messages.success(self.request, _('Your task has been updated.'))
