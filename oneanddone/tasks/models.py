@@ -255,7 +255,6 @@ class Task(CachedModel, CreatedModifiedModel, CreatedByModel):
         default=30,
         verbose_name='estimated time'
     )
-    admin_time = models.TextField(max_length=25, verbose_name='', blank=True)
     instructions = models.TextField()
     is_draft = models.BooleanField(verbose_name='draft')
     is_invalid = models.BooleanField(verbose_name='invalid')
