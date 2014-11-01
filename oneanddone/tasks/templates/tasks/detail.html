@@ -44,15 +44,9 @@
   </div>
   <div class="row">
     <div class="three-fields">
-      {% if task.admin_time %}
-      {% trans execution_time=task.admin_time %}
-        Estimated time: {{ execution_time }} minutes
-      {% endtrans %}
-      {% else %}
       {% trans execution_time=task.execution_time %}
         Estimated time: {{ execution_time }} minutes
       {% endtrans %}      
-      {% endif %}
     </div>
     <div class="two-of-three-fields">
       {% if task.keyword_set.exists() %}
