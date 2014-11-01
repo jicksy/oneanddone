@@ -45,8 +45,7 @@ class PreviewConfirmationForm(forms.Form):
 
 
 class TaskForm(forms.ModelForm):
-    admin_time = (forms.CharField(
-                help_text=_('Enter If more than 60 minutes.'),
+    admin_time = (forms.IntegerField(
                 required=False,
                 widget=forms.TextInput(attrs={'class': 'fill-width'})))
     keywords = (forms.CharField(
