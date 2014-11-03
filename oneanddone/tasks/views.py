@@ -127,9 +127,13 @@ class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Creat
         ctx['cancel_url'] = reverse('tasks.list')
         return ctx
 
-    def form_valid(self, form):
-        form.save(self.request.user)
 
+    def form_valid(self, form):
+        task_object = form.save(self.request.user, commit=False)
+        admin_time = form.cleaned_data['admin_time']
+        if admin_time:
+            task_object.execution_time=admin_time
+            task_object.save(self.request.user)
         messages.success(self.request, _('Your task has been created.'))
         return redirect('tasks.list')
 
@@ -217,6 +221,7 @@ class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Temp
         for criterion in criterion_objs:
             criterion.batches.add(import_batch)
             criterion.save()
+
 
         task = forms['task_form'].save(self.request.user, commit=False)
         keywords = [k.strip() for k in forms['task_form'].cleaned_data['keywords'].split(',')]
@@ -340,6 +345,7 @@ class TaskDetailView(generic.DetailView):
         if self.request.user.is_authenticated():
             ctx['attempt'] = get_object_or_none(TaskAttempt, user=self.request.user,
                                                 task=task, state=TaskAttempt.STARTED)
+        
 
         # determine label for Get Started button
         if task.is_taken:
@@ -370,8 +376,13 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
         return ctx
 
     def form_valid(self, form):
+        admin_time = form.cleaned_data.get('admin_time')
+        if admin_time:
+            self.object.execution_time = admin_time
+            self.object.save()
         form.save(self.request.user)
 
+    
         messages.success(self.request, _('Your task has been updated.'))
         return redirect('tasks.list')
 

@@ -46,7 +46,7 @@
     <div class="three-fields">
       {% trans execution_time=task.execution_time %}
         Estimated time: {{ execution_time }} minutes
-      {% endtrans %}
+      {% endtrans %}      
     </div>
     <div class="two-of-three-fields">
       {% if task.keyword_set.exists() %}
@@ -74,7 +74,7 @@
   {% if task.why_this_matters %}
     <div class="row">
       <div>
-        <h2>{{ _('Why this matters') }}</h2>
+        <h2 class="ex">{{ _('Why this matters') }}</h2>
         <div class="markdown">{{ task.why_this_matters_html }}</div>
       </div>
     </div>

@@ -49,6 +49,10 @@ class TaskForm(forms.ModelForm):
                 help_text=_('Please use commas to separate your keywords.'),
                 required=False,
                 widget=forms.TextInput(attrs={'class': 'medium-field'})))
+    admin_time = (forms.CharField(
+                help_text=_('Enter If more than 60 minutes.'),
+                required=False,
+                widget=forms.TextInput(attrs={'class': 'fill-width'})))
 
     def __init__(self, *args, **kwargs):
         if kwargs['instance']:

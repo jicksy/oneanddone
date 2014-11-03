@@ -317,6 +317,7 @@ class Task(CachedModel, CreatedModifiedModel, CreatedByModel):
         default=30,
         verbose_name='estimated time'
     )
+
     instructions = models.TextField()
     is_draft = models.BooleanField(verbose_name='draft')
     is_invalid = models.BooleanField(verbose_name='invalid')
