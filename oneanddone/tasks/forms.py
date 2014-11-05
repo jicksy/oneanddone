@@ -81,6 +81,13 @@ class TaskForm(forms.ModelForm):
         if kwargs.get('commit', True):
             self._process_keywords(creator)
         return self.instance
+        
+    def clean_execution_time(self):
+        execution_time = self.cleaned_data.get('execution_time')
+        admin_time = self.cleaned_data.get('admin_time')
+        if admin_time:
+            execution_time = admin_time
+        return execution_time
 
     class Media:
         css = {
