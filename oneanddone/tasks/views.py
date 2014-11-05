@@ -127,11 +127,7 @@ class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Creat
         return ctx
 
     def form_valid(self, form):
-        task_object = form.save(self.request.user, commit=False)
-        admin_time = form.cleaned_data['admin_time']
-        if admin_time:
-            task_object.execution_time=admin_time
-            task_object.save(self.request.user)
+        form.save(self.request.user)
         messages.success(self.request, _('Your task has been created.'))
         return redirect('tasks.list')
 
@@ -341,10 +337,6 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
         return ctx
 
     def form_valid(self, form):
-        admin_time = form.cleaned_data.get('admin_time')
-        if admin_time:
-            self.object.execution_time = admin_time
-            self.object.save()
         form.save(self.request.user)
         messages.success(self.request, _('Your task has been updated.'))
         return redirect('tasks.list')
