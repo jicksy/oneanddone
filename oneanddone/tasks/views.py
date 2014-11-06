@@ -127,11 +127,6 @@ class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Creat
         ctx['cancel_url'] = reverse('tasks.list')
         return ctx
 
-    def form_valid(self, form):
-        form.save(self.request.user)
-        
-        messages.success(self.request, _('Your task has been created.'))
-        return redirect('tasks.list')
 
 
 class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.TemplateView):
