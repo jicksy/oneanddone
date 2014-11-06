@@ -115,7 +115,7 @@ class CreateFeedbackView(LoginRequiredMixin, PrivacyPolicyRequiredMixin,
         return redirect('base.home')
 
 
-class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.CreateView, SetExecutionTime):
+class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.CreateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
