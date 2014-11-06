@@ -4,6 +4,9 @@
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
 from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.shortcuts import redirect
+from tower import ugettext as _
 
 from oneanddone.tasks.models import Task, TaskAttempt
 
@@ -51,3 +54,16 @@ class TaskMustBeAvailableMixin(object):
     def get_queryset(self):
         queryset = super(TaskMustBeAvailableMixin, self).get_queryset()
         return queryset.filter(Task.is_available_filter(allow_expired=self.allow_expired_tasks))
+        
+        
+class SetExecutionTime(object):
+    def form_valid(self, form):
+        self.object = form.save(self.request.user, commit=False)
+        admin_time = form.cleaned_data['admin_time']
+        if admin_time:
+            self.object.execution_time = admin_time
+            self.object.save()
+        form.save(self.request.user)
+        
+        messages.success(self.request, _('Your task has been updated.'))
+        return redirect('tasks.list')
