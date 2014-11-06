@@ -24,6 +24,7 @@ from oneanddone.tasks.mixins import (APIRecordCreatorMixin,
 from oneanddone.tasks.mixins import (TaskMustBeAvailableMixin,
                                      HideNonRepeatableTaskMixin)
 from oneanddone.tasks.mixins import GetUserAttemptMixin
+from oneanddone.tasks.mixins import SetExecutionTime
 from oneanddone.tasks.models import BugzillaBug, Feedback, Task, TaskAttempt
 from oneanddone.tasks.serializers import TaskSerializer
 from oneanddone.users.mixins import (MyStaffUserRequiredMixin,
@@ -114,7 +115,7 @@ class CreateFeedbackView(LoginRequiredMixin, PrivacyPolicyRequiredMixin,
         return redirect('base.home')
 
 
-class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.CreateView):
+class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.CreateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
@@ -125,12 +126,6 @@ class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Creat
         ctx['action'] = 'Add'
         ctx['cancel_url'] = reverse('tasks.list')
         return ctx
-
-    def form_valid(self, form):
-        form.save(self.request.user)
-        
-        messages.success(self.request, _('Your task has been created.'))
-        return redirect('tasks.list')
 
 
 class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.TemplateView):
@@ -325,7 +320,7 @@ class TaskDetailView(generic.DetailView):
         return ctx
 
 
-class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.UpdateView):
+class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.UpdateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
@@ -336,12 +331,6 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
         ctx['action'] = 'Update'
         ctx['cancel_url'] = reverse('tasks.detail', args=[self.get_object().id])
         return ctx
-
-    def form_valid(self, form):
-        form.save(self.request.user)
-        
-        messages.success(self.request, _('Your task has been updated.'))
-        return redirect('tasks.list')
 
 
 class TaskDetailAPI(APIOnlyCreatorMayDeleteMixin,
