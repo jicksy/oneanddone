@@ -321,7 +321,7 @@ class TaskDetailView(generic.DetailView):
         return ctx
 
 
-class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.UpdateView, SetExecutionTime):
+class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.UpdateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
