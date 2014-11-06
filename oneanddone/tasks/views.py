@@ -23,6 +23,7 @@ from oneanddone.tasks.mixins import (APIRecordCreatorMixin,
                                      APIOnlyCreatorMayDeleteMixin)
 from oneanddone.tasks.mixins import (TaskMustBeAvailableMixin,
                                      HideNonRepeatableTaskMixin)
+from oneanddone.tasks.mixins import SetExecutionTime
 from oneanddone.tasks.mixins import GetUserAttemptMixin
 from oneanddone.tasks.models import BugzillaBug, Feedback, Task, TaskAttempt
 from oneanddone.tasks.serializers import TaskSerializer
