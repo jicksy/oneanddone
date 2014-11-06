@@ -338,12 +338,6 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
         ctx['cancel_url'] = reverse('tasks.detail', args=[self.get_object().id])
         return ctx
 
-    def form_valid(self, form):
-        form.save(self.request.user)
-        
-        messages.success(self.request, _('Your task has been updated.'))
-        return redirect('tasks.list')
-
 
 class TaskDetailAPI(APIOnlyCreatorMayDeleteMixin,
                     generics.RetrieveUpdateDestroyAPIView):
