@@ -128,6 +128,7 @@ class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Creat
 
     def form_valid(self, form):
         form.save(self.request.user)
+        
         messages.success(self.request, _('Your task has been created.'))
         return redirect('tasks.list')
 
@@ -338,6 +339,7 @@ class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Updat
 
     def form_valid(self, form):
         form.save(self.request.user)
+        
         messages.success(self.request, _('Your task has been updated.'))
         return redirect('tasks.list')
 
