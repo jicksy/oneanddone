@@ -12,7 +12,7 @@ from braces.views import LoginRequiredMixin
 from datetime import date, timedelta
 from django_filters.views import FilterView
 from rest_framework import generics
-from tower import ugettext as _, ugettext_lazy as _lazy
+from tower import ugettext as _
 
 from oneanddone.base.util import get_object_or_none, SortHeaders
 from oneanddone.tasks.filters import ActivityFilterSet, TasksFilterSet
@@ -24,9 +24,7 @@ from oneanddone.tasks.mixins import (APIRecordCreatorMixin,
 from oneanddone.tasks.mixins import (TaskMustBeAvailableMixin,
                                      HideNonRepeatableTaskMixin)
 from oneanddone.tasks.mixins import GetUserAttemptMixin
-from oneanddone.tasks.mixins import SetExecutionTime
-from oneanddone.tasks.models import (BugzillaBug, Feedback, Task, TaskAttempt,
-                                     TaskMetrics)
+from oneanddone.tasks.models import BugzillaBug, Feedback, Task, TaskAttempt
 from oneanddone.tasks.serializers import TaskSerializer
 from oneanddone.users.mixins import (MyStaffUserRequiredMixin,
                                      PrivacyPolicyRequiredMixin)
@@ -34,10 +32,10 @@ from oneanddone.users.mixins import (MyStaffUserRequiredMixin,
 
 class ActivityView(LoginRequiredMixin, MyStaffUserRequiredMixin, FilterView):
     list_headers = (
-        (_lazy(u'Task'), 'task__name'),
-        (_lazy(u'User'), 'user__profile__name'),
-        (_lazy(u'Status'), 'state_display'),
-        (_lazy(u'Time'), 'elapsed_time'),
+        (_('Task'), 'task__name'),
+        (_('User'), 'user__profile__name'),
+        (_('Status'), 'state_display'),
+        (_('Time'), 'elapsed_time'),
     )
     context_object_name = 'attempts'
     template_name = 'tasks/activity.html'
@@ -116,7 +114,7 @@ class CreateFeedbackView(LoginRequiredMixin, PrivacyPolicyRequiredMixin,
         return redirect('base.home')
 
 
-class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.CreateView):
+class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.CreateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
@@ -127,6 +125,12 @@ class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMi
         ctx['action'] = 'Add'
         ctx['cancel_url'] = reverse('tasks.list')
         return ctx
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        
+        messages.success(self.request, _('Your task has been created.'))
+        return redirect('tasks.list')
 
 
 class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.TemplateView):
@@ -239,37 +243,6 @@ class ListTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, FilterView):
     filterset_class = TasksFilterSet
 
 
-class MetricsView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.ListView):
-    list_headers = (
-        (_lazy(u'Task'), 'task__name'),
-        (_lazy(u'Users Completed'), 'completed_users',
-         _lazy(u'Number of unique users who completed the task')),
-        (_lazy(u'Users Abandoned'), 'abandoned_users',
-         _lazy(u'Number of unique users who explicitly abandoned the task')),
-        (_lazy(u'Users Did Not Complete'), 'incomplete_users',
-         _lazy(u'Number of unique users who took but never completed the task')),
-        (_lazy(u'Moves on to Another'), 'user_completes_then_takes_another_count',
-         _lazy(u'Number of times the task was completed and the the same user takes another task')),
-        (_lazy(u'Takes No Further Tasks'), 'user_takes_then_quits_count',
-         _lazy(u'Number of times the task was taken and then the same user takes no further tasks')),
-    )
-    context_object_name = 'metrics'
-    template_name = 'tasks/metrics.html'
-    paginate_by = 20
-
-    def get_context_data(self, *args, **kwargs):
-        ctx = super(MetricsView, self).get_context_data(*args, **kwargs)
-        ctx['headers'] = self.sort_headers
-        return ctx
-
-    def get_queryset(self):
-        self.sort_headers = SortHeaders(self.request, self.list_headers,
-                                        default_order_field=1,
-                                        default_order_type='desc')
-        qs = TaskMetrics.objects.all()
-        return qs.order_by(self.sort_headers.get_order_by())
-
-
 class RandomTasksView(TaskMustBeAvailableMixin, generic.ListView):
     queryset = Task.objects.order_by('?')
     template_name = 'tasks/random.html'
@@ -352,7 +325,7 @@ class TaskDetailView(generic.DetailView):
         return ctx
 
 
-class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.UpdateView):
+class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.UpdateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
@@ -363,6 +336,12 @@ class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMi
         ctx['action'] = 'Update'
         ctx['cancel_url'] = reverse('tasks.detail', args=[self.get_object().id])
         return ctx
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+        
+        messages.success(self.request, _('Your task has been updated.'))
+        return redirect('tasks.list')
 
 
 class TaskDetailAPI(APIOnlyCreatorMayDeleteMixin,
