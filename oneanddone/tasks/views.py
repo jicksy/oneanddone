@@ -4,7 +4,6 @@
 from django.contrib import messages
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
-from django.forms.models import model_to_dict
 from django.shortcuts import redirect
 from django.template.loader import get_template
 from django.views import generic
@@ -25,7 +24,6 @@ from oneanddone.tasks.mixins import (APIRecordCreatorMixin,
 from oneanddone.tasks.mixins import (TaskMustBeAvailableMixin,
                                      HideNonRepeatableTaskMixin)
 from oneanddone.tasks.mixins import GetUserAttemptMixin
-from oneanddone.tasks.mixins import SetExecutionTime
 from oneanddone.tasks.models import (BugzillaBug, Feedback, Task, TaskAttempt,
                                      TaskMetrics)
 from oneanddone.tasks.serializers import TaskSerializer
@@ -111,29 +109,16 @@ class CreateFeedbackView(LoginRequiredMixin, PrivacyPolicyRequiredMixin,
             subject,
             filtered_message,
             'oneanddone@mozilla.com',
-            [feedback.attempt.task.owner.email])
+            [feedback.attempt.task.creator.email])
 
         messages.success(self.request, _('Your feedback has been submitted. Thanks!'))
         return redirect('base.home')
 
 
-class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.CreateView):
+class CreateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.CreateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
-
-    def get_form_kwargs(self):
-        kwargs = super(CreateTaskView, self).get_form_kwargs()
-        kwargs['initial']['owner'] = self.request.user
-        return kwargs
-
-    def get_initial(self):
-        if self.kwargs.get('clone'):
-            original_task = Task.objects.get(pk=self.kwargs['clone'])
-            self.initial.update(model_to_dict(original_task))
-            self.initial['keywords'] = original_task.keywords_list
-            self.initial['name'] = ' '.join(['Copy of', original_task.name])
-        return self.initial
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(CreateTaskView, self).get_context_data(*args, **kwargs)
@@ -141,6 +126,12 @@ class CreateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMi
         ctx['action'] = 'Add'
         ctx['cancel_url'] = reverse('tasks.list')
         return ctx
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+
+        messages.success(self.request, _('Your task has been created.'))
+        return redirect('tasks.list')
 
 
 class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.TemplateView):
@@ -162,9 +153,7 @@ class ImportTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.Temp
         criterion_formset = TaskInvalidCriteriaFormSet(prefix='criterion',
                                                        **kwargs)
         kwargs['initial'] = {'end_date': date.today() + timedelta(days=30),
-                             'repeatable': False,
-                             'owner': self.request.user}
-
+                             'repeatable': False}
         task_form = TaskForm(instance=None, prefix='task', **kwargs)
 
         forms = {'criterion_formset': criterion_formset,
@@ -255,22 +244,35 @@ class ListTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, FilterView):
     filterset_class = TasksFilterSet
 
 
-class ListTooShortTasksView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.ListView):
-    context_object_name = 'metrics'
-    queryset = TaskMetrics.objects.filter(too_short_completed_attempts_count__gt=0)
-    template_name = 'tasks/too_short_tasks.html'
-
-
 class MetricsView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.ListView):
+    list_headers = (
+        (_lazy(u'Task'), 'task__name'),
+        (_lazy(u'Users Completed'), 'completed_users',
+         _lazy(u'Number of unique users who completed the task')),
+        (_lazy(u'Users Abandoned'), 'abandoned_users',
+         _lazy(u'Number of unique users who explicitly abandoned the task')),
+        (_lazy(u'Users Did Not Complete'), 'incomplete_users',
+         _lazy(u'Number of unique users who took but never completed the task')),
+        (_lazy(u'Moves on to Another'), 'user_completes_then_takes_another_count',
+         _lazy(u'Number of times the task was completed and the the same user takes another task')),
+        (_lazy(u'Takes No Further Tasks'), 'user_takes_then_quits_count',
+         _lazy(u'Number of times the task was taken and then the same user takes no further tasks')),
+    )
     context_object_name = 'metrics'
-    model = TaskMetrics
     template_name = 'tasks/metrics.html'
+    paginate_by = 20
 
     def get_context_data(self, *args, **kwargs):
         ctx = super(MetricsView, self).get_context_data(*args, **kwargs)
-        ctx['averages'] = TaskMetrics.get_averages()
-        ctx['medians'] = TaskMetrics.get_medians()
+        ctx['headers'] = self.sort_headers
         return ctx
+
+    def get_queryset(self):
+        self.sort_headers = SortHeaders(self.request, self.list_headers,
+                                        default_order_field=1,
+                                        default_order_type='desc')
+        qs = TaskMetrics.objects.all()
+        return qs.order_by(self.sort_headers.get_order_by())
 
 
 class RandomTasksView(TaskMustBeAvailableMixin, generic.ListView):
@@ -355,7 +357,7 @@ class TaskDetailView(generic.DetailView):
         return ctx
 
 
-class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMixin, generic.UpdateView):
+class UpdateTaskView(LoginRequiredMixin, MyStaffUserRequiredMixin, generic.UpdateView):
     model = Task
     form_class = TaskForm
     template_name = 'tasks/form.html'
@@ -366,6 +368,12 @@ class UpdateTaskView(LoginRequiredMixin, SetExecutionTime, MyStaffUserRequiredMi
         ctx['action'] = 'Update'
         ctx['cancel_url'] = reverse('tasks.detail', args=[self.get_object().id])
         return ctx
+
+    def form_valid(self, form):
+        form.save(self.request.user)
+
+        messages.success(self.request, _('Your task has been updated.'))
+        return redirect('tasks.list')
 
 
 class TaskDetailAPI(APIOnlyCreatorMayDeleteMixin,
